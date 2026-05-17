@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="ja">
 <head>
@@ -278,6 +279,18 @@
     .label {
       font-size: 13px;
       color: var(--sub);
+    }
+
+    .unit-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .unit-label {
+      color: var(--sub);
+      font-size: 14px;
     }
 
     input[type="text"],
@@ -646,6 +659,14 @@
                     <option value="でかい">でかい</option>
                     <option value="どでかい">どでかい</option>
                   </select>
+
+                  <div class="field hidden" id="crotchCmField" style="margin-top:8px;">
+                    <label class="label" for="crotchCm">サイズ</label>
+                    <div class="unit-row">
+                      <input id="crotchCm" type="text" inputmode="decimal" autocomplete="off" />
+                      <span class="unit-label">cm</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="field">
@@ -769,6 +790,8 @@
     const addClothesBtn = $("#addClothesBtn");
     const agingEnabled = $("#agingEnabled");
     const agingField = $("#agingField");
+    const crotchSize = $("#crotchSize");
+    const crotchCmField = $("#crotchCmField");
 
     let imageDataUrl = "";
     let imageFileName = "";
@@ -793,6 +816,7 @@
       "expression",
       "appearanceDetail",
       "crotchSize",
+      "crotchCm",
       "futanari",
       "economicStatus",
       "economicNote",
@@ -877,6 +901,15 @@
       addClothesBtn.disabled = $$(".clothes-input").length >= 3;
     }
 
+    function toggleCrotchCmField() {
+      const enabled = Boolean(trim(crotchSize.value));
+      crotchCmField.classList.toggle("hidden", !enabled);
+
+      if (!enabled) {
+        $("#crotchCm").value = "";
+      }
+    }
+
     function collectData() {
       const data = {};
 
@@ -933,6 +966,7 @@
 
       renderImagePreview();
       toggleAgingField();
+      toggleCrotchCmField();
       autoSave();
     }
 
@@ -1023,7 +1057,11 @@
       }
 
       if (trim(data.crotchSize)) {
-        appearanceLines.push(`股間：${trim(data.crotchSize)}`);
+        const crotchText = trim(data.crotchCm)
+          ? `${trim(data.crotchSize)}（${trim(data.crotchCm)}cm）`
+          : trim(data.crotchSize);
+
+        appearanceLines.push(`股間：${crotchText}`);
       }
 
       if (data.futanari) {
@@ -1223,6 +1261,7 @@
 
       renderImagePreview();
       toggleAgingField();
+      toggleCrotchCmField();
 
       localStorage.removeItem(CACHE_KEY);
       setCacheStatus("自動保存：待機中");
@@ -1415,8 +1454,18 @@
       if (trim(data.bodyBuild)) appearance.push(`体格：${trim(data.bodyBuild)}`);
       if (trim(data.expression)) appearance.push(`表情：${trim(data.expression)}`);
       if (trim(data.appearanceDetail)) appearance.push(trim(data.appearanceDetail));
-      if (trim(data.crotchSize)) appearance.push(`股間：${trim(data.crotchSize)}`);
-      if (data.futanari) appearance.push("ふたなり：あり");
+
+      if (trim(data.crotchSize)) {
+        const crotchText = trim(data.crotchCm)
+          ? `${trim(data.crotchSize)}（${trim(data.crotchCm)}cm）`
+          : trim(data.crotchSize);
+
+        appearance.push(`股間：${crotchText}`);
+      }
+
+      if (data.futanari) {
+        appearance.push("ふたなり：あり");
+      }
 
       if (appearance.length) {
         page1.push({ title: "容姿", body: appearance.join("\n") });
@@ -1816,8 +1865,21 @@
       autoSave();
     });
 
+    crotchSize.addEventListener("change", () => {
+      toggleCrotchCmField();
+      autoSave();
+    });
+
     form.addEventListener("input", autoSave);
-    form.addEventListener("change", autoSave);
+
+    form.addEventListener("change", (event) => {
+      if (event.target && event.target.id === "crotchSize") {
+        toggleCrotchCmField();
+      }
+
+      autoSave();
+    });
+
     $("#combinePngPages").addEventListener("change", autoSave);
 
     createClothesInput("");
@@ -1830,9 +1892,12 @@
         setCacheStatus("自動保存：読込済み");
       } catch {
         setCacheStatus("自動保存：待機中");
+        toggleAgingField();
+        toggleCrotchCmField();
       }
     } else {
       toggleAgingField();
+      toggleCrotchCmField();
     }
   </script>
 </body>
