@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>カップリング設定作成ジェネレーター</title>
+  <title>BLカップリング設定作成ジェネレーター</title>
   <style>
     :root {
       --bg: #f6f8ff;
@@ -635,6 +635,27 @@
                 <label class="label" for="appearanceDetail">容姿詳細</label>
                 <textarea id="appearanceDetail" rows="5"></textarea>
               </div>
+
+              <div class="grid two" style="margin-top:12px;">
+                <div class="field">
+                  <label class="label" for="crotchSize">股間</label>
+                  <select id="crotchSize">
+                    <option value="">未設定</option>
+                    <option value="短小">短小</option>
+                    <option value="普通">普通</option>
+                    <option value="でかい">でかい</option>
+                    <option value="どでかい">どでかい</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="label">ふたなり</label>
+                  <label class="check" style="min-height:42px;">
+                    <input id="futanari" type="checkbox" />
+                    ふたなり
+                  </label>
+                </div>
+              </div>
             </section>
 
             <section class="section">
@@ -771,6 +792,8 @@
       "bodyBuild",
       "expression",
       "appearanceDetail",
+      "crotchSize",
+      "futanari",
       "economicStatus",
       "economicNote",
       "firstPerson",
@@ -999,6 +1022,14 @@
         appearanceLines.push(trim(data.appearanceDetail));
       }
 
+      if (trim(data.crotchSize)) {
+        appearanceLines.push(`股間：${trim(data.crotchSize)}`);
+      }
+
+      if (data.futanari) {
+        appearanceLines.push("ふたなり：あり");
+      }
+
       if (appearanceLines.length) {
         lines.push("容姿：");
         lines.push(...appearanceLines);
@@ -1011,6 +1042,7 @@
       }
 
       const speechLines = [];
+
       if (trim(data.firstPerson)) speechLines.push(`一人称：${trim(data.firstPerson)}`);
       if (trim(data.thirdPerson)) speechLines.push(`三人称：${trim(data.thirdPerson)}`);
 
@@ -1383,6 +1415,8 @@
       if (trim(data.bodyBuild)) appearance.push(`体格：${trim(data.bodyBuild)}`);
       if (trim(data.expression)) appearance.push(`表情：${trim(data.expression)}`);
       if (trim(data.appearanceDetail)) appearance.push(trim(data.appearanceDetail));
+      if (trim(data.crotchSize)) appearance.push(`股間：${trim(data.crotchSize)}`);
+      if (data.futanari) appearance.push("ふたなり：あり");
 
       if (appearance.length) {
         page1.push({ title: "容姿", body: appearance.join("\n") });
@@ -1423,61 +1457,79 @@
       return [page1, page2, page3];
     }
 
-    function paginateImageSections(ctx, groups, bodyW, maxContentHeight) {
+    function paginateSingleGroup(ctx, group, bodyW, maxContentHeight) {
       const pages = [];
       const fontSize = 21;
       const lineHeight = 32;
       const sectionGap = 14;
       const titleHeight = lineHeight;
 
-      groups.forEach((group) => {
-        let currentPage = [];
-        let currentHeight = 0;
+      let currentPage = [];
+      let currentHeight = 0;
 
-        group.forEach((section) => {
-          ctx.font = `${fontSize}px sans-serif`;
-          const lines = wrapText(ctx, section.body, bodyW);
-          let index = 0;
-          let firstChunk = true;
+      group.forEach((section) => {
+        ctx.font = `${fontSize}px sans-serif`;
+        const lines = wrapText(ctx, section.body, bodyW);
+        let index = 0;
+        let firstChunk = true;
 
-          while (index < lines.length || firstChunk) {
-            const title = firstChunk ? section.title : `${section.title}（続き）`;
-            const availableHeight = maxContentHeight - currentHeight;
-            const titleAndGapHeight = titleHeight + sectionGap;
-            const maxLines = Math.max(1, Math.floor((availableHeight - titleAndGapHeight) / lineHeight));
+        while (index < lines.length || firstChunk) {
+          const title = firstChunk ? section.title : `${section.title}（続き）`;
+          const availableHeight = maxContentHeight - currentHeight;
+          const titleAndGapHeight = titleHeight + sectionGap;
+          const maxLines = Math.max(1, Math.floor((availableHeight - titleAndGapHeight) / lineHeight));
 
-            if (availableHeight < titleAndGapHeight + lineHeight) {
-              if (currentPage.length) pages.push(currentPage);
-              currentPage = [];
-              currentHeight = 0;
-              continue;
-            }
-
-            const chunkLines = lines.slice(index, index + maxLines);
-
-            if (!chunkLines.length && firstChunk) {
-              chunkLines.push("");
-            }
-
-            currentPage.push({
-              title,
-              body: chunkLines.join("\n")
-            });
-
-            currentHeight += titleAndGapHeight + chunkLines.length * lineHeight;
-            index += chunkLines.length;
-            firstChunk = false;
-
-            if (index < lines.length) {
+          if (availableHeight < titleAndGapHeight + lineHeight) {
+            if (currentPage.length) {
               pages.push(currentPage);
-              currentPage = [];
-              currentHeight = 0;
             }
-          }
-        });
 
-        if (currentPage.length) {
-          pages.push(currentPage);
+            currentPage = [];
+            currentHeight = 0;
+            continue;
+          }
+
+          const chunkLines = lines.slice(index, index + maxLines);
+
+          if (!chunkLines.length && firstChunk) {
+            chunkLines.push("");
+          }
+
+          currentPage.push({
+            title,
+            body: chunkLines.join("\n")
+          });
+
+          currentHeight += titleAndGapHeight + chunkLines.length * lineHeight;
+          index += chunkLines.length;
+          firstChunk = false;
+
+          if (index < lines.length) {
+            pages.push(currentPage);
+            currentPage = [];
+            currentHeight = 0;
+          }
+        }
+      });
+
+      if (currentPage.length) {
+        pages.push(currentPage);
+      }
+
+      return pages;
+    }
+
+    function paginateImageSections(ctx, groups, bodyW, firstPageMaxContentHeight, otherPageMaxContentHeight) {
+      const pages = [];
+
+      groups.forEach((group, groupIndex) => {
+        const maxContentHeight = groupIndex === 0 ? firstPageMaxContentHeight : otherPageMaxContentHeight;
+        const groupPages = paginateSingleGroup(ctx, group, bodyW, maxContentHeight);
+
+        if (groupPages.length) {
+          pages.push(...groupPages);
+        } else if (groupIndex < 3) {
+          pages.push([]);
         }
       });
 
@@ -1496,6 +1548,7 @@
         pageCount
       } = options;
 
+      const isFirstPage = pageIndex === 0;
       const name = getCharacterName(data);
       const kana = getCharacterKana(data);
 
@@ -1524,98 +1577,100 @@
       ctx.fill();
       ctx.stroke();
 
-      const cardX = margin + 26;
-      const cardY = margin + 26;
-      const maxImageW = 310;
-      const maxImageH = 360;
-      const imageBox = getImageBoxByRatio(img, cardX, cardY, maxImageW, maxImageH);
-
-      ctx.fillStyle = "#f2f6ff";
-      ctx.strokeStyle = "#cfdaf2";
-      ctx.lineWidth = 2;
-      drawRoundRect(ctx, imageBox.x, imageBox.y, imageBox.w, imageBox.h, 22);
-      ctx.fill();
-      ctx.stroke();
-
-      if (img) {
-        ctx.save();
-        drawRoundRect(ctx, imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24, 18);
-        ctx.clip();
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24);
-        drawContainedImage(ctx, img, imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = "#8090ad";
-        ctx.font = "24px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("No Image", imageBox.x + imageBox.w / 2, imageBox.y + imageBox.h / 2);
-        ctx.textAlign = "left";
-      }
-
-      const textX = cardX + maxImageW + 34;
-      let y = cardY + 28;
-
-      ctx.fillStyle = "#1d2433";
-      ctx.font = "bold 42px sans-serif";
-      wrapText(ctx, name, W - textX - margin - 34).slice(0, 2).forEach((line) => {
-        ctx.fillText(line, textX, y);
-        y += 54;
-      });
-
-      if (kana) {
-        ctx.fillStyle = "#667085";
-        ctx.font = "24px sans-serif";
-        ctx.fillText(kana, textX, y);
-        y += 42;
-      }
-
-      const tagTexts = [data.role, data.species].filter(Boolean);
-
-      if (trim(data.age)) {
-        tagTexts.push(`${trim(data.age)}歳`);
-      }
-
-      let tagX = textX;
-      let tagY = y + 6;
-
-      ctx.font = "22px sans-serif";
-
-      tagTexts.forEach((tag) => {
-        const tw = ctx.measureText(tag).width + 34;
-
-        if (tagX + tw > W - margin - 28) {
-          tagX = textX;
-          tagY += 48;
-        }
-
-        ctx.fillStyle = "rgba(109, 140, 255, 0.13)";
-        ctx.strokeStyle = "#adc0ff";
-        ctx.lineWidth = 1.5;
-        drawRoundRect(ctx, tagX, tagY, tw, 34, 17);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = "#4052a8";
-        ctx.fillText(tag, tagX + 17, tagY + 24);
-        tagX += tw + 10;
-      });
-
       ctx.fillStyle = "#667085";
       ctx.font = "20px sans-serif";
       ctx.textAlign = "right";
       ctx.fillText(`${String(pageIndex + 1).padStart(2, "0")} / ${String(pageCount).padStart(2, "0")}`, W - margin - 32, margin + 46);
       ctx.textAlign = "left";
 
+      if (isFirstPage) {
+        const cardX = margin + 26;
+        const cardY = margin + 26;
+        const maxImageW = 310;
+        const maxImageH = 360;
+        const imageBox = getImageBoxByRatio(img, cardX, cardY, maxImageW, maxImageH);
+
+        ctx.fillStyle = "#f2f6ff";
+        ctx.strokeStyle = "#cfdaf2";
+        ctx.lineWidth = 2;
+        drawRoundRect(ctx, imageBox.x, imageBox.y, imageBox.w, imageBox.h, 22);
+        ctx.fill();
+        ctx.stroke();
+
+        if (img) {
+          ctx.save();
+          drawRoundRect(ctx, imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24, 18);
+          ctx.clip();
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24);
+          drawContainedImage(ctx, img, imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24);
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "#8090ad";
+          ctx.font = "24px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillText("No Image", imageBox.x + imageBox.w / 2, imageBox.y + imageBox.h / 2);
+          ctx.textAlign = "left";
+        }
+
+        const textX = cardX + maxImageW + 34;
+        let headerY = cardY + 28;
+
+        ctx.fillStyle = "#1d2433";
+        ctx.font = "bold 42px sans-serif";
+        wrapText(ctx, name, W - textX - margin - 34).slice(0, 2).forEach((line) => {
+          ctx.fillText(line, textX, headerY);
+          headerY += 54;
+        });
+
+        if (kana) {
+          ctx.fillStyle = "#667085";
+          ctx.font = "24px sans-serif";
+          ctx.fillText(kana, textX, headerY);
+          headerY += 42;
+        }
+
+        const tagTexts = [data.role, data.species].filter(Boolean);
+
+        if (trim(data.age)) {
+          tagTexts.push(`${trim(data.age)}歳`);
+        }
+
+        let tagX = textX;
+        let tagY = headerY + 6;
+
+        ctx.font = "22px sans-serif";
+
+        tagTexts.forEach((tag) => {
+          const tw = ctx.measureText(tag).width + 34;
+
+          if (tagX + tw > W - margin - 28) {
+            tagX = textX;
+            tagY += 48;
+          }
+
+          ctx.fillStyle = "rgba(109, 140, 255, 0.13)";
+          ctx.strokeStyle = "#adc0ff";
+          ctx.lineWidth = 1.5;
+          drawRoundRect(ctx, tagX, tagY, tw, 34, 17);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = "#4052a8";
+          ctx.fillText(tag, tagX + 17, tagY + 24);
+          tagX += tw + 10;
+        });
+      }
+
       const bodyX = margin + 36;
-      const bodyY = margin + 430;
+      const bodyY = isFirstPage ? margin + 430 : margin + 94;
       const bodyW = W - margin * 2 - 72;
       const maxBottom = H - margin - 38;
       const fontSize = 21;
       const titleSize = 23;
       const lineHeight = 32;
 
-      y = bodyY;
+      let y = bodyY;
 
       sections.forEach((section) => {
         ctx.fillStyle = "#4052a8";
@@ -1647,9 +1702,13 @@
       const H = canvas.height;
       const margin = 54;
       const bodyW = W - margin * 2 - 72;
-      const bodyY = margin + 430;
+
+      const firstBodyY = margin + 430;
+      const otherBodyY = margin + 94;
       const maxBottom = H - margin - 38;
-      const maxContentHeight = maxBottom - bodyY;
+      const firstPageMaxContentHeight = maxBottom - firstBodyY;
+      const otherPageMaxContentHeight = maxBottom - otherBodyY;
+
       const name = getCharacterName(data);
       const img = await loadImageElement(imageDataUrl).catch(() => null);
       const groups = buildImageSectionGroups(data);
@@ -1660,7 +1719,14 @@
         return;
       }
 
-      const pages = paginateImageSections(ctx, groups, bodyW, maxContentHeight);
+      const pages = paginateImageSections(
+        ctx,
+        groups,
+        bodyW,
+        firstPageMaxContentHeight,
+        otherPageMaxContentHeight
+      );
+
       const fixedPages = pages.length ? pages : [[], [], []];
       const pageDataUrls = [];
 
