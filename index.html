@@ -1,0 +1,1740 @@
+
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>カップリング設定作成ジェネレーター</title>
+  <style>
+    :root {
+      --bg: #f6f8ff;
+      --panel: #ffffff;
+      --panel-2: #eef4ff;
+      --text: #1d2433;
+      --sub: #667085;
+      --line: #d7e0f2;
+      --accent: #6d8cff;
+      --accent-2: #9fb3ff;
+      --danger: #ef6b73;
+      --shadow: 0 18px 45px rgba(43, 65, 128, 0.12);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(157, 184, 255, 0.35), transparent 38%),
+        linear-gradient(180deg, #fafdff 0%, var(--bg) 100%);
+      color: var(--text);
+      font-family:
+        "Hiragino Kaku Gothic ProN",
+        "Yu Gothic",
+        "Meiryo",
+        system-ui,
+        sans-serif;
+      line-height: 1.7;
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(24px, 4vw, 38px);
+      letter-spacing: 0.04em;
+      line-height: 1.25;
+    }
+
+    .lead {
+      margin: 8px 0 0;
+      color: var(--sub);
+      font-size: 14px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--sub);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(109, 140, 255, 0.16);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(215, 224, 242, 0.95);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.88), rgba(238, 244, 255, 0.88));
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0.04em;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .sticky {
+      position: sticky;
+      top: 14px;
+    }
+
+    .image-preview {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      border-radius: 16px;
+      border: 1px dashed var(--accent-2);
+      background:
+        linear-gradient(135deg, rgba(109, 140, 255, 0.12), rgba(255, 255, 255, 0.7)),
+        repeating-linear-gradient(
+          -45deg,
+          rgba(109, 140, 255, 0.08),
+          rgba(109, 140, 255, 0.08) 10px,
+          rgba(255, 255, 255, 0.32) 10px,
+          rgba(255, 255, 255, 0.32) 20px
+        );
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: var(--sub);
+      text-align: center;
+      padding: 18px;
+      margin-bottom: 14px;
+    }
+
+    .image-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .file-label {
+      display: block;
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      color: var(--text);
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .file-label:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-2);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .actions {
+      display: grid;
+      gap: 10px;
+    }
+
+    .actions.two {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .btn {
+      min-height: 42px;
+      padding: 10px 13px;
+      border-radius: 12px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--line);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent-2);
+      box-shadow: 0 10px 25px rgba(43, 65, 128, 0.09);
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: linear-gradient(135deg, #6d8cff, #8f7bff);
+      border-color: transparent;
+    }
+
+    .btn.danger {
+      color: #fff;
+      background: linear-gradient(135deg, #ef6b73, #ff9e8a);
+      border-color: transparent;
+    }
+
+    .btn.soft {
+      background: var(--panel-2);
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .form {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 14px;
+      font-size: 16px;
+      letter-spacing: 0.04em;
+    }
+
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .label {
+      font-size: 13px;
+      color: var(--sub);
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+      color: var(--text);
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(109, 140, 255, 0.13);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    textarea.rows-20 {
+      min-height: 360px;
+    }
+
+    .inline {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--sub);
+      font-size: 13px;
+      user-select: none;
+    }
+
+    .check input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--accent);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.15s ease, background 0.15s ease;
+    }
+
+    .chip input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .chip:has(input:checked) {
+      border-color: var(--accent);
+      background: rgba(109, 140, 255, 0.12);
+    }
+
+    .clothes-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .clothes-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .small-btn {
+      min-width: 42px;
+      min-height: 42px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--sub);
+    }
+
+    .small-btn:hover {
+      color: var(--danger);
+      border-color: rgba(239, 107, 115, 0.45);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      z-index: 20;
+      max-width: min(420px, calc(100% - 36px));
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(29, 36, 51, 0.94);
+      color: #fff;
+      box-shadow: 0 18px 45px rgba(20, 28, 48, 0.28);
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      font-size: 14px;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    canvas {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .hero,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sticky {
+        position: static;
+      }
+
+      .grid.two,
+      .grid.three {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <h1 class="title">BLカップリング設定作成ジェネレーター</h1>
+        <p class="lead">未入力項目はコピー・TXT・画像書き出し時に自動除外されます。</p>
+      </div>
+      <div class="status" id="cacheStatus">
+        <span class="status-dot"></span>
+        <span>自動保存：待機中</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <aside class="panel sticky">
+        <div class="panel-head">
+          <h2 class="panel-title">書き出し</h2>
+        </div>
+        <div class="panel-body">
+          <div class="image-preview" id="imagePreview">
+            キャラクタービジュアル<br />
+            画像を読み込み
+          </div>
+
+          <label class="file-label" for="visualInput">画像を読み込む</label>
+          <input id="visualInput" type="file" accept="image/*" />
+
+          <div class="actions">
+            <button class="btn primary" type="button" id="copyBtn">全文コピー</button>
+            <button class="btn primary" type="button" id="txtBtn">TXT書き出し</button>
+            <button class="btn primary" type="button" id="pngBtn">画像PNG書き出し</button>
+            <button class="btn soft" type="button" id="downloadImageBtn" disabled>登録画像を別保存</button>
+          </div>
+
+          <hr style="border:0;border-top:1px solid var(--line);margin:18px 0;" />
+
+          <div class="actions two">
+            <button class="btn" type="button" id="saveJsonBtn">JSON保存</button>
+            <label class="btn" for="loadJsonInput" style="text-align:center;">JSON読込</label>
+            <input id="loadJsonInput" type="file" accept="application/json,.json" />
+          </div>
+
+          <div class="actions" style="margin-top:10px;">
+            <button class="btn soft" type="button" id="saveCacheBtn">ブラウザに保存</button>
+            <button class="btn soft" type="button" id="loadCacheBtn">保存データ読込</button>
+            <button class="btn danger" type="button" id="clearBtn">入力内容をクリア</button>
+          </div>
+        </div>
+      </aside>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">設定入力</h2>
+        </div>
+
+        <div class="panel-body">
+          <form class="form" id="settingForm">
+            <section class="section">
+              <h3 class="section-title">名前</h3>
+              <div class="grid two">
+                <div class="field">
+                  <label class="label" for="lastName">姓</label>
+                  <input id="lastName" type="text" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label class="label" for="lastKana">姓ふりがな</label>
+                  <input id="lastKana" type="text" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label class="label" for="firstName">名</label>
+                  <input id="firstName" type="text" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label class="label" for="firstKana">名ふりがな</label>
+                  <input id="firstKana" type="text" autocomplete="off" />
+                </div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">基本設定</h3>
+              <div class="grid three">
+                <div class="field">
+                  <label class="label" for="role">属性</label>
+                  <select id="role">
+                    <option value="攻め">攻め</option>
+                    <option value="受け">受け</option>
+                    <option value="リバ">リバ</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="label" for="species">種族</label>
+                  <select id="species">
+                    <option value="人間">人間</option>
+                    <option value="悪魔">悪魔</option>
+                    <option value="インキュバス">インキュバス</option>
+                    <option value="サキュバス">サキュバス</option>
+                    <option value="妖怪">妖怪</option>
+                    <option value="怪異">怪異</option>
+                    <option value="異形頭">異形頭</option>
+                    <option value="魔族">魔族</option>
+                    <option value="神">神</option>
+                    <option value="死神">死神</option>
+                    <option value="天使">天使</option>
+                    <option value="獣人">獣人</option>
+                    <option value="魔法使い">魔法使い</option>
+                    <option value="魔女">魔女</option>
+                    <option value="妖精">妖精</option>
+                    <option value="エルフ">エルフ</option>
+                    <option value="魔獣">魔獣</option>
+                    <option value="神獣">神獣</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label class="label" for="age">年齢</label>
+                  <input id="age" type="text" autocomplete="off" />
+                </div>
+              </div>
+
+              <div class="inline" style="margin-top:12px;">
+                <label class="check">
+                  <input id="agingEnabled" type="checkbox" />
+                  老化設定をON
+                </label>
+
+                <div class="field hidden" id="agingField" style="min-width:min(100%, 360px);">
+                  <label class="label" for="agingType">老化について</label>
+                  <select id="agingType">
+                    <option value="第一世代(1年ごとに老化)">第一世代(1年ごとに老化)</option>
+                    <option value="第二世代(10代で老化停止)">第二世代(10代で老化停止)</option>
+                    <option value="第三世代(20～40代で老化停止)">第三世代(20～40代で老化停止)</option>
+                    <option value="不老不死">不老不死</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">性格</h3>
+              <textarea id="personality" rows="5"></textarea>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">容姿</h3>
+
+              <div class="grid three">
+                <div class="field">
+                  <label class="label" for="hairColor">髪の毛の色</label>
+                  <input id="hairColor" type="text" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label class="label" for="eyeColor">瞳の色</label>
+                  <input id="eyeColor" type="text" autocomplete="off" />
+                </div>
+                <div class="field">
+                  <label class="label" for="skinColor">肌の色</label>
+                  <input id="skinColor" type="text" autocomplete="off" />
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <div class="section-title" style="margin-bottom:8px;">
+                  <span>服装</span>
+                  <button class="btn soft" type="button" id="addClothesBtn" style="min-height:36px;padding:7px 12px;">服装追加</button>
+                </div>
+                <div class="clothes-list" id="clothesList"></div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <label class="label" for="height">身長</label>
+                <input id="height" type="text" autocomplete="off" placeholder="例：180cm" />
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <label class="label" for="bodyBuild">体格</label>
+                <input id="bodyBuild" type="text" autocomplete="off" placeholder="例：細身 / 筋肉質 / 華奢" />
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <label class="label" for="expression">表情</label>
+                <input id="expression" type="text" autocomplete="off" placeholder="例：穏やかな微笑み / 無表情気味" />
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <label class="label" for="appearanceDetail">容姿詳細</label>
+                <textarea id="appearanceDetail" rows="5"></textarea>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">経済状況</h3>
+              <div class="grid two">
+                <div class="field">
+                  <label class="label" for="economicStatus">経済状況</label>
+                  <select id="economicStatus">
+                    <option value="平凡">平凡</option>
+                    <option value="裕福">裕福</option>
+                    <option value="貧乏">貧乏</option>
+                    <option value="ホームレス">ホームレス</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label class="label" for="economicNote">詳細</label>
+                  <textarea id="economicNote" rows="5"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">口調</h3>
+
+              <div class="grid two">
+                <div class="field">
+                  <label class="label" for="firstPerson">一人称</label>
+                  <input id="firstPerson" type="text" autocomplete="off" placeholder="例：俺 / 僕 / 私" />
+                </div>
+
+                <div class="field">
+                  <label class="label" for="thirdPerson">三人称</label>
+                  <input id="thirdPerson" type="text" autocomplete="off" placeholder="例：君 / あんた / 名前呼び" />
+                </div>
+              </div>
+
+              <div class="field" style="margin-top:12px;">
+                <label class="label" for="speechStyle">口調</label>
+                <textarea id="speechStyle" rows="5"></textarea>
+              </div>
+
+              <div class="grid three" style="margin-top:12px;">
+                <div class="field">
+                  <label class="label" for="sample01">口調サンプル 01</label>
+                  <textarea id="sample01" rows="5"></textarea>
+                </div>
+                <div class="field">
+                  <label class="label" for="sample02">口調サンプル 02</label>
+                  <textarea id="sample02" rows="5"></textarea>
+                </div>
+                <div class="field">
+                  <label class="label" for="sample03">口調サンプル 03</label>
+                  <textarea id="sample03" rows="5"></textarea>
+                </div>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">抱える欲望</h3>
+              <div class="chips" id="desireList">
+                <label class="chip"><input type="checkbox" name="desires" value="独占欲" />独占欲</label>
+                <label class="chip"><input type="checkbox" name="desires" value="征服欲" />征服欲</label>
+                <label class="chip"><input type="checkbox" name="desires" value="支配欲" />支配欲</label>
+                <label class="chip"><input type="checkbox" name="desires" value="依存" />依存</label>
+                <label class="chip"><input type="checkbox" name="desires" value="溺愛" />溺愛</label>
+                <label class="chip"><input type="checkbox" name="desires" value="庇護欲" />庇護欲</label>
+              </div>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">対象への感情</h3>
+              <textarea id="targetFeeling" class="rows-20" rows="20"></textarea>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">補足1</h3>
+              <textarea id="note01" class="rows-20" rows="20"></textarea>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">補足2</h3>
+              <textarea id="note02" class="rows-20" rows="20"></textarea>
+            </section>
+
+            <section class="section">
+              <h3 class="section-title">補足3</h3>
+              <textarea id="note03" class="rows-20" rows="20"></textarea>
+            </section>
+          </form>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <canvas id="exportCanvas" width="1032" height="1457"></canvas>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const CACHE_KEY = "bl_coupling_generator_cache_v1";
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    const form = $("#settingForm");
+    const toast = $("#toast");
+    const cacheStatus = $("#cacheStatus");
+    const imagePreview = $("#imagePreview");
+    const visualInput = $("#visualInput");
+    const downloadImageBtn = $("#downloadImageBtn");
+    const clothesList = $("#clothesList");
+    const addClothesBtn = $("#addClothesBtn");
+    const agingEnabled = $("#agingEnabled");
+    const agingField = $("#agingField");
+
+    let imageDataUrl = "";
+    let imageFileName = "";
+    let imageMimeType = "";
+
+    const fields = [
+      "lastName",
+      "lastKana",
+      "firstName",
+      "firstKana",
+      "role",
+      "species",
+      "age",
+      "agingEnabled",
+      "agingType",
+      "personality",
+      "hairColor",
+      "eyeColor",
+      "skinColor",
+      "height",
+      "bodyBuild",
+      "expression",
+      "appearanceDetail",
+      "economicStatus",
+      "economicNote",
+      "firstPerson",
+      "thirdPerson",
+      "speechStyle",
+      "sample01",
+      "sample02",
+      "sample03",
+      "targetFeeling",
+      "note01",
+      "note02",
+      "note03"
+    ];
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2200);
+    }
+
+    function trim(value) {
+      return String(value ?? "").trim();
+    }
+
+    function setCacheStatus(text) {
+      cacheStatus.querySelector("span:last-child").textContent = text;
+    }
+
+    function sanitizeFileName(name) {
+      const base = trim(name) || "bl_character_setting";
+      return base.replace(/[\\/:*?"<>|]/g, "_").replace(/\s+/g, "_");
+    }
+
+    function getCharacterName(data = collectData()) {
+      const name = `${trim(data.lastName)}${trim(data.firstName)}`;
+      return name || "無名キャラクター";
+    }
+
+    function getCharacterKana(data = collectData()) {
+      return `${trim(data.lastKana)}${trim(data.firstKana)}`;
+    }
+
+    function createClothesInput(value = "") {
+      const row = document.createElement("div");
+      row.className = "clothes-row";
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "clothes-input";
+      input.placeholder = "服装";
+      input.value = value;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "small-btn";
+      removeBtn.textContent = "×";
+      removeBtn.title = "削除";
+
+      removeBtn.addEventListener("click", () => {
+        if ($$(".clothes-input").length <= 1) {
+          input.value = "";
+        } else {
+          row.remove();
+        }
+
+        updateAddClothesButton();
+        autoSave();
+      });
+
+      input.addEventListener("input", autoSave);
+
+      row.append(input, removeBtn);
+      clothesList.append(row);
+      updateAddClothesButton();
+    }
+
+    function updateAddClothesButton() {
+      addClothesBtn.disabled = $$(".clothes-input").length >= 3;
+    }
+
+    function collectData() {
+      const data = {};
+
+      fields.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        if (el.type === "checkbox") {
+          data[id] = el.checked;
+        } else {
+          data[id] = el.value;
+        }
+      });
+
+      data.clothes = $$(".clothes-input").map((input) => input.value);
+      data.desires = $$('input[name="desires"]:checked').map((input) => input.value);
+      data.imageDataUrl = imageDataUrl;
+      data.imageFileName = imageFileName;
+      data.imageMimeType = imageMimeType;
+
+      return data;
+    }
+
+    function applyData(data) {
+      if (!data || typeof data !== "object") return;
+
+      fields.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        if (el.type === "checkbox") {
+          el.checked = Boolean(data[id]);
+        } else if (data[id] !== undefined) {
+          el.value = data[id];
+        }
+      });
+
+      clothesList.innerHTML = "";
+      const clothes = Array.isArray(data.clothes) && data.clothes.length ? data.clothes : [""];
+      clothes.slice(0, 3).forEach((value) => createClothesInput(value));
+
+      $$('input[name="desires"]').forEach((input) => {
+        input.checked = Array.isArray(data.desires) && data.desires.includes(input.value);
+      });
+
+      imageDataUrl = data.imageDataUrl || "";
+      imageFileName = data.imageFileName || "";
+      imageMimeType = data.imageMimeType || "";
+      renderImagePreview();
+      toggleAgingField();
+      autoSave();
+    }
+
+    function renderImagePreview() {
+      imagePreview.innerHTML = "";
+
+      if (!imageDataUrl) {
+        imagePreview.style.aspectRatio = "3 / 4";
+        imagePreview.innerHTML = "キャラクタービジュアル<br />画像を読み込み";
+        downloadImageBtn.disabled = true;
+        return;
+      }
+
+      const img = document.createElement("img");
+      img.src = imageDataUrl;
+      img.alt = "キャラクタービジュアル";
+
+      img.onload = () => {
+        imagePreview.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
+      };
+
+      imagePreview.append(img);
+      downloadImageBtn.disabled = false;
+    }
+
+    function toggleAgingField() {
+      agingField.classList.toggle("hidden", !agingEnabled.checked);
+    }
+
+    function buildText(data = collectData()) {
+      const lines = [];
+
+      const addLine = (label, value) => {
+        const v = trim(value);
+        if (!v) return;
+        lines.push(`${label}：${v}`);
+      };
+
+      const addBlock = (label, value) => {
+        const v = trim(value);
+        if (!v) return;
+        lines.push(`${label}：`);
+        lines.push(v);
+      };
+
+      const name = getCharacterName(data);
+      const kana = getCharacterKana(data);
+
+      if (name !== "無名キャラクター") {
+        lines.push(`名前：${name}${kana ? `(${kana})` : ""}`);
+      }
+
+      addLine("属性", data.role);
+      addLine("種族", data.species);
+
+      if (trim(data.age)) {
+        lines.push(`年齢：${trim(data.age)}`);
+      }
+
+      if (data.agingEnabled) {
+        addLine("老化について", data.agingType);
+      }
+
+      addBlock("性格", data.personality);
+
+      const appearanceLines = [];
+
+      if (trim(data.hairColor)) appearanceLines.push(`髪の毛の色：${trim(data.hairColor)}`);
+      if (trim(data.eyeColor)) appearanceLines.push(`瞳の色：${trim(data.eyeColor)}`);
+      if (trim(data.skinColor)) appearanceLines.push(`肌の色：${trim(data.skinColor)}`);
+
+      const clothes = Array.isArray(data.clothes)
+        ? data.clothes.map(trim).filter(Boolean)
+        : [];
+
+      if (clothes.length) {
+        appearanceLines.push("服装：");
+        clothes.forEach((item) => appearanceLines.push(`・${item}`));
+      }
+
+      if (trim(data.height)) appearanceLines.push(`身長：${trim(data.height)}`);
+      if (trim(data.bodyBuild)) appearanceLines.push(`体格：${trim(data.bodyBuild)}`);
+      if (trim(data.expression)) appearanceLines.push(`表情：${trim(data.expression)}`);
+
+      if (trim(data.appearanceDetail)) {
+        appearanceLines.push("詳細：");
+        appearanceLines.push(trim(data.appearanceDetail));
+      }
+
+      if (appearanceLines.length) {
+        lines.push("容姿：");
+        lines.push(...appearanceLines);
+      }
+
+      if (trim(data.economicStatus) || trim(data.economicNote)) {
+        lines.push("経済状況：");
+        if (trim(data.economicStatus)) lines.push(trim(data.economicStatus));
+        if (trim(data.economicNote)) lines.push(trim(data.economicNote));
+      }
+
+      const speechLines = [];
+      if (trim(data.firstPerson)) speechLines.push(`一人称：${trim(data.firstPerson)}`);
+      if (trim(data.thirdPerson)) speechLines.push(`三人称：${trim(data.thirdPerson)}`);
+
+      if (trim(data.speechStyle)) {
+        speechLines.push("口調：");
+        speechLines.push(trim(data.speechStyle));
+      }
+
+      if (speechLines.length) {
+        lines.push("口調：");
+        lines.push(...speechLines);
+      }
+
+      addBlock("口調サンプル01", data.sample01);
+      addBlock("口調サンプル02", data.sample02);
+      addBlock("口調サンプル03", data.sample03);
+
+      if (Array.isArray(data.desires) && data.desires.length) {
+        lines.push(`抱える欲望：${data.desires.join(" / ")}`);
+      }
+
+      addBlock("対象への感情", data.targetFeeling);
+      addBlock("補足1", data.note01);
+      addBlock("補足2", data.note02);
+      addBlock("補足3", data.note03);
+
+      return lines
+        .join("\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    }
+
+    async function copyText() {
+      const text = buildText();
+
+      if (!text) {
+        showToast("コピーできる項目がありません。");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("全文をコピーしました。");
+      } catch {
+        const temp = document.createElement("textarea");
+        temp.value = text;
+        document.body.append(temp);
+        temp.select();
+        document.execCommand("copy");
+        temp.remove();
+        showToast("全文をコピーしました。");
+      }
+    }
+
+    function downloadBlob(content, fileName, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+
+      a.href = url;
+      a.download = fileName;
+      document.body.append(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadTxt() {
+      const data = collectData();
+      const text = buildText(data);
+
+      if (!text) {
+        showToast("書き出しできる項目がありません。");
+        return;
+      }
+
+      const name = sanitizeFileName(getCharacterName(data));
+      downloadBlob(text, `${name}_設定.txt`, "text/plain;charset=utf-8");
+      showToast("TXTを書き出しました。");
+    }
+
+    function saveJson() {
+      const data = collectData();
+      const name = sanitizeFileName(getCharacterName(data));
+      const json = JSON.stringify(data, null, 2);
+
+      downloadBlob(json, `${name}_project.json`, "application/json;charset=utf-8");
+      showToast("JSONを書き出しました。");
+    }
+
+    function loadJsonFile(file) {
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          applyData(data);
+          showToast("JSONを読み込みました。");
+        } catch {
+          showToast("JSONの読み込みに失敗しました。");
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    function saveCache() {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify(collectData()));
+        setCacheStatus("自動保存：保存済み");
+        showToast("ブラウザに保存しました。");
+      } catch {
+        showToast("ブラウザ保存に失敗しました。画像が大きすぎる可能性があります。");
+      }
+    }
+
+    function loadCache() {
+      const raw = localStorage.getItem(CACHE_KEY);
+
+      if (!raw) {
+        showToast("保存データがありません。");
+        return;
+      }
+
+      try {
+        applyData(JSON.parse(raw));
+        showToast("保存データを読み込みました。");
+      } catch {
+        showToast("保存データの読み込みに失敗しました。");
+      }
+    }
+
+    function autoSave() {
+      window.clearTimeout(autoSave.timer);
+      setCacheStatus("自動保存：編集中");
+
+      autoSave.timer = window.setTimeout(() => {
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify(collectData()));
+          setCacheStatus("自動保存：保存済み");
+        } catch {
+          setCacheStatus("自動保存：失敗");
+        }
+      }, 450);
+    }
+
+    function clearForm() {
+      if (!confirm("入力内容をすべてクリアしますか？")) return;
+
+      fields.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        if (el.type === "checkbox") {
+          el.checked = false;
+        } else if (el.tagName === "SELECT") {
+          el.selectedIndex = 0;
+        } else {
+          el.value = "";
+        }
+      });
+
+      clothesList.innerHTML = "";
+      createClothesInput("");
+
+      $$('input[name="desires"]').forEach((input) => {
+        input.checked = false;
+      });
+
+      imageDataUrl = "";
+      imageFileName = "";
+      imageMimeType = "";
+
+      renderImagePreview();
+      toggleAgingField();
+
+      localStorage.removeItem(CACHE_KEY);
+      setCacheStatus("自動保存：待機中");
+      showToast("入力内容をクリアしました。");
+    }
+
+    function downloadRegisteredImage() {
+      if (!imageDataUrl) {
+        showToast("登録画像がありません。");
+        return;
+      }
+
+      const data = collectData();
+      const name = sanitizeFileName(getCharacterName(data));
+      const ext = imageMimeType.includes("png")
+        ? "png"
+        : imageMimeType.includes("webp")
+          ? "webp"
+          : "jpg";
+
+      const a = document.createElement("a");
+      a.href = imageDataUrl;
+      a.download = `${name}_visual.${ext}`;
+      document.body.append(a);
+      a.click();
+      a.remove();
+    }
+
+    function loadImageFile(file) {
+      if (!file) return;
+
+      if (!file.type.startsWith("image/")) {
+        showToast("画像ファイルを選択してください。");
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        imageDataUrl = reader.result;
+        imageFileName = file.name;
+        imageMimeType = file.type;
+        renderImagePreview();
+        autoSave();
+        showToast("画像を読み込みました。");
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function loadImageElement(src) {
+      return new Promise((resolve, reject) => {
+        if (!src) {
+          resolve(null);
+          return;
+        }
+
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    function drawRoundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawContainedImage(ctx, img, x, y, w, h) {
+      if (!img) return;
+
+      const ratio = Math.min(w / img.width, h / img.height);
+      const dw = img.width * ratio;
+      const dh = img.height * ratio;
+      const dx = x + (w - dw) / 2;
+      const dy = y + (h - dh) / 2;
+
+      ctx.drawImage(img, dx, dy, dw, dh);
+    }
+
+    function getImageBoxByRatio(img, x, y, maxW, maxH) {
+      if (!img) {
+        return { x, y, w: 270, h: 360 };
+      }
+
+      const ratio = img.width / img.height;
+      let w = maxW;
+      let h = w / ratio;
+
+      if (h > maxH) {
+        h = maxH;
+        w = h * ratio;
+      }
+
+      return { x, y, w, h };
+    }
+
+    function wrapText(ctx, text, maxWidth) {
+      const result = [];
+      const rawLines = String(text).split("\n");
+
+      rawLines.forEach((raw) => {
+        const line = raw.trimEnd();
+
+        if (!line) {
+          result.push("");
+          return;
+        }
+
+        let current = "";
+
+        for (const char of line) {
+          const next = current + char;
+
+          if (ctx.measureText(next).width > maxWidth && current) {
+            result.push(current);
+            current = char;
+          } else {
+            current = next;
+          }
+        }
+
+        if (current) result.push(current);
+      });
+
+      return result;
+    }
+
+
+function buildImageSectionGroups(data) {
+  const page1 = [];
+  const page2 = [];
+  const page3 = [];
+
+  const push1 = (title, value) => {
+    const v = trim(value);
+    if (!v) return;
+    page1.push({ title, body: v });
+  };
+
+  const push2 = (title, value) => {
+    const v = trim(value);
+    if (!v) return;
+    page2.push({ title, body: v });
+  };
+
+  const push3 = (title, value) => {
+    const v = trim(value);
+    if (!v) return;
+    page3.push({ title, body: v });
+  };
+
+  const basics = [];
+
+  if (trim(data.role)) basics.push(`属性：${trim(data.role)}`);
+  if (trim(data.species)) basics.push(`種族：${trim(data.species)}`);
+  if (trim(data.age)) basics.push(`年齢：${trim(data.age)}`);
+  if (data.agingEnabled && trim(data.agingType)) basics.push(`老化：${trim(data.agingType)}`);
+
+  if (basics.length) {
+    page1.push({ title: "基本設定", body: basics.join("\n") });
+  }
+
+  push1("性格", data.personality);
+
+  const appearance = [];
+
+  if (trim(data.hairColor)) appearance.push(`髪：${trim(data.hairColor)}`);
+  if (trim(data.eyeColor)) appearance.push(`瞳：${trim(data.eyeColor)}`);
+  if (trim(data.skinColor)) appearance.push(`肌：${trim(data.skinColor)}`);
+
+  const clothes = Array.isArray(data.clothes)
+    ? data.clothes.map(trim).filter(Boolean)
+    : [];
+
+  if (clothes.length) {
+    appearance.push(`服装：${clothes.join(" / ")}`);
+  }
+
+  if (trim(data.height)) appearance.push(`身長：${trim(data.height)}`);
+  if (trim(data.bodyBuild)) appearance.push(`体格：${trim(data.bodyBuild)}`);
+  if (trim(data.expression)) appearance.push(`表情：${trim(data.expression)}`);
+  if (trim(data.appearanceDetail)) appearance.push(trim(data.appearanceDetail));
+
+  if (appearance.length) {
+    page1.push({ title: "容姿", body: appearance.join("\n") });
+  }
+
+  const economy = [];
+
+  if (trim(data.economicStatus)) economy.push(trim(data.economicStatus));
+  if (trim(data.economicNote)) economy.push(trim(data.economicNote));
+
+  if (economy.length) {
+    page1.push({ title: "経済状況", body: economy.join("\n") });
+  }
+
+  const speech = [];
+
+  if (trim(data.firstPerson)) speech.push(`一人称：${trim(data.firstPerson)}`);
+  if (trim(data.thirdPerson)) speech.push(`三人称：${trim(data.thirdPerson)}`);
+  if (trim(data.speechStyle)) speech.push(trim(data.speechStyle));
+
+  if (speech.length) {
+    page2.push({ title: "口調", body: speech.join("\n") });
+  }
+
+  push2("口調サンプル01", data.sample01);
+  push2("口調サンプル02", data.sample02);
+  push2("口調サンプル03", data.sample03);
+
+  if (Array.isArray(data.desires) && data.desires.length) {
+    page3.push({ title: "抱える欲望", body: data.desires.join(" / ") });
+  }
+
+  push3("対象への感情", data.targetFeeling);
+  push3("補足1", data.note01);
+  push3("補足2", data.note02);
+  push3("補足3", data.note03);
+
+  const groups = [];
+
+  if (page1.length) groups.push(page1);
+  if (page2.length) groups.push(page2);
+  if (page3.length) groups.push(page3);
+
+  return groups;
+}
+
+
+
+    function paginateImageSections(ctx, groups, bodyW, maxContentHeight) {
+      const pages = [];
+      const fontSize = 21;
+      const titleSize = 23;
+      const lineHeight = 32;
+      const sectionGap = 14;
+      const titleHeight = lineHeight;
+
+      groups.forEach((group) => {
+        let currentPage = [];
+        let currentHeight = 0;
+
+        group.forEach((section) => {
+          ctx.font = `${fontSize}px sans-serif`;
+          const lines = wrapText(ctx, section.body, bodyW);
+          let index = 0;
+          let firstChunk = true;
+
+          while (index < lines.length || firstChunk) {
+            const title = firstChunk ? section.title : `${section.title}（続き）`;
+            const availableHeight = maxContentHeight - currentHeight;
+            const titleAndGapHeight = titleHeight + sectionGap;
+            const maxLines = Math.max(1, Math.floor((availableHeight - titleAndGapHeight) / lineHeight));
+
+            if (availableHeight < titleAndGapHeight + lineHeight) {
+              if (currentPage.length) pages.push(currentPage);
+              currentPage = [];
+              currentHeight = 0;
+              continue;
+            }
+
+            const chunkLines = lines.slice(index, index + maxLines);
+
+            if (!chunkLines.length && firstChunk) {
+              chunkLines.push("");
+            }
+
+            currentPage.push({
+              title,
+              body: chunkLines.join("\n")
+            });
+
+            currentHeight += titleAndGapHeight + chunkLines.length * lineHeight;
+            index += chunkLines.length;
+            firstChunk = false;
+
+            if (index < lines.length) {
+              pages.push(currentPage);
+              currentPage = [];
+              currentHeight = 0;
+            }
+          }
+        });
+
+        if (currentPage.length) {
+          pages.push(currentPage);
+        }
+      });
+
+      return pages;
+    }
+
+    function drawExportPage(ctx, options) {
+      const {
+        W,
+        H,
+        margin,
+        data,
+        img,
+        sections,
+        pageIndex,
+        pageCount
+      } = options;
+
+      const name = getCharacterName(data);
+      const kana = getCharacterKana(data);
+
+      ctx.clearRect(0, 0, W, H);
+
+      const bg = ctx.createLinearGradient(0, 0, W, H);
+      bg.addColorStop(0, "#f8fbff");
+      bg.addColorStop(1, "#edf3ff");
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.fillStyle = "rgba(109, 140, 255, 0.13)";
+      ctx.beginPath();
+      ctx.arc(120, 110, 240, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(143, 123, 255, 0.10)";
+      ctx.beginPath();
+      ctx.arc(930, 1420, 320, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#d8e2f5";
+      ctx.lineWidth = 2;
+      drawRoundRect(ctx, margin, margin, W - margin * 2, H - margin * 2, 34);
+      ctx.fill();
+      ctx.stroke();
+
+      const cardX = margin + 26;
+      const cardY = margin + 26;
+      const maxImageW = 310;
+      const maxImageH = 360;
+      const imageBox = getImageBoxByRatio(img, cardX, cardY, maxImageW, maxImageH);
+
+      ctx.fillStyle = "#f2f6ff";
+      ctx.strokeStyle = "#cfdaf2";
+      ctx.lineWidth = 2;
+      drawRoundRect(ctx, imageBox.x, imageBox.y, imageBox.w, imageBox.h, 22);
+      ctx.fill();
+      ctx.stroke();
+
+      if (img) {
+        ctx.save();
+        drawRoundRect(ctx, imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24, 18);
+        ctx.clip();
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24);
+        drawContainedImage(ctx, img, imageBox.x + 12, imageBox.y + 12, imageBox.w - 24, imageBox.h - 24);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = "#8090ad";
+        ctx.font = "24px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("No Image", imageBox.x + imageBox.w / 2, imageBox.y + imageBox.h / 2);
+        ctx.textAlign = "left";
+      }
+
+      const textX = cardX + maxImageW + 34;
+      let y = cardY + 28;
+
+      ctx.fillStyle = "#1d2433";
+      ctx.font = "bold 42px sans-serif";
+      wrapText(ctx, name, W - textX - margin - 34).slice(0, 2).forEach((line) => {
+        ctx.fillText(line, textX, y);
+        y += 54;
+      });
+
+      if (kana) {
+        ctx.fillStyle = "#667085";
+        ctx.font = "24px sans-serif";
+        ctx.fillText(kana, textX, y);
+        y += 42;
+      }
+
+      const tagTexts = [data.role, data.species].filter(Boolean);
+
+      if (trim(data.age)) {
+        tagTexts.push(`${trim(data.age)}歳`);
+      }
+
+      let tagX = textX;
+      let tagY = y + 6;
+
+      ctx.font = "22px sans-serif";
+
+      tagTexts.forEach((tag) => {
+        const tw = ctx.measureText(tag).width + 34;
+
+        if (tagX + tw > W - margin - 28) {
+          tagX = textX;
+          tagY += 48;
+        }
+
+        ctx.fillStyle = "rgba(109, 140, 255, 0.13)";
+        ctx.strokeStyle = "#adc0ff";
+        ctx.lineWidth = 1.5;
+        drawRoundRect(ctx, tagX, tagY, tw, 34, 17);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = "#4052a8";
+        ctx.fillText(tag, tagX + 17, tagY + 24);
+        tagX += tw + 10;
+      });
+
+      ctx.fillStyle = "#667085";
+      ctx.font = "20px sans-serif";
+      ctx.textAlign = "right";
+      ctx.fillText(`${pageIndex + 1} / ${pageCount}`, W - margin - 32, margin + 46);
+      ctx.textAlign = "left";
+
+      const bodyX = margin + 36;
+      const bodyY = margin + 430;
+      const bodyW = W - margin * 2 - 72;
+      const maxBottom = H - margin - 38;
+      const fontSize = 21;
+      const titleSize = 23;
+      const lineHeight = 32;
+
+      y = bodyY;
+
+      sections.forEach((section) => {
+        ctx.fillStyle = "#4052a8";
+        ctx.font = `bold ${titleSize}px sans-serif`;
+        ctx.fillText(`◇ ${section.title}`, bodyX, y);
+        y += lineHeight;
+
+        ctx.fillStyle = "#1d2433";
+        ctx.font = `${fontSize}px sans-serif`;
+
+        const wrapped = wrapText(ctx, section.body, bodyW);
+
+        wrapped.forEach((line) => {
+          if (y <= maxBottom) {
+            ctx.fillText(line, bodyX + 22, y);
+            y += lineHeight;
+          }
+        });
+
+        y += 14;
+      });
+    }
+
+    async function downloadPng() {
+      const data = collectData();
+      const canvas = $("#exportCanvas");
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width;
+      const H = canvas.height;
+      const margin = 54;
+      const bodyW = W - margin * 2 - 72;
+      const bodyY = margin + 430;
+      const maxBottom = H - margin - 38;
+      const maxContentHeight = maxBottom - bodyY;
+      const name = getCharacterName(data);
+      const img = await loadImageElement(imageDataUrl).catch(() => null);
+      const groups = buildImageSectionGroups(data);
+
+      if (!groups.length && !img) {
+        showToast("画像書き出しできる項目がありません。");
+        return;
+      }
+
+      const pages = groups.length
+        ? paginateImageSections(ctx, groups, bodyW, maxContentHeight)
+        : [[]];
+
+      for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+        drawExportPage(ctx, {
+          W,
+          H,
+          margin,
+          data,
+          img,
+          sections: pages[pageIndex],
+          pageIndex,
+          pageCount: pages.length
+        });
+
+        const fileName = `${sanitizeFileName(name)}_設定画像_${String(pageIndex + 1).padStart(2, "0")}.png`;
+        const a = document.createElement("a");
+
+        a.href = canvas.toDataURL("image/png");
+        a.download = fileName;
+        document.body.append(a);
+        a.click();
+        a.remove();
+
+        await new Promise((resolve) => setTimeout(resolve, 250));
+      }
+
+      showToast("画像PNGを書き出しました。");
+    }
+
+    visualInput.addEventListener("change", (event) => {
+      loadImageFile(event.target.files[0]);
+      event.target.value = "";
+    });
+
+    $("#copyBtn").addEventListener("click", copyText);
+    $("#txtBtn").addEventListener("click", downloadTxt);
+    $("#pngBtn").addEventListener("click", downloadPng);
+    $("#downloadImageBtn").addEventListener("click", downloadRegisteredImage);
+    $("#saveJsonBtn").addEventListener("click", saveJson);
+
+    $("#loadJsonInput").addEventListener("change", (event) => {
+      loadJsonFile(event.target.files[0]);
+      event.target.value = "";
+    });
+
+    $("#saveCacheBtn").addEventListener("click", saveCache);
+    $("#loadCacheBtn").addEventListener("click", loadCache);
+    $("#clearBtn").addEventListener("click", clearForm);
+
+    addClothesBtn.addEventListener("click", () => {
+      if ($$(".clothes-input").length >= 3) return;
+      createClothesInput("");
+      autoSave();
+    });
+
+    agingEnabled.addEventListener("change", () => {
+      toggleAgingField();
+      autoSave();
+    });
+
+    form.addEventListener("input", autoSave);
+    form.addEventListener("change", autoSave);
+
+    createClothesInput("");
+
+    const cached = localStorage.getItem(CACHE_KEY);
+
+    if (cached) {
+      try {
+        applyData(JSON.parse(cached));
+        setCacheStatus("自動保存：読込済み");
+      } catch {
+        setCacheStatus("自動保存：待機中");
+      }
+    } else {
+      toggleAgingField();
+    }
+  </script>
+</body>
+</html>
